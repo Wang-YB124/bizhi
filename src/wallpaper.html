@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <style>
   html, body { margin: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
-  #v { position: absolute; inset: 0; width: 100vw; height: 100vh; object-fit: cover; transform-origin: center center; display: block; }
+  #v, #img { position: absolute; inset: 0; width: 100vw; height: 100vh; object-fit: cover; transform-origin: center center; display: block; }
+  #img { display: none; }
   #tile { position: absolute; inset: 0; width: 100vw; height: 100vh; display: none; }
 </style>
 </head>
@@ -17,18 +18,28 @@
   </defs>
 </svg>
 <video id="v" playsinline></video>
+<img id="img" alt="">
 <canvas id="tile"></canvas>
 <script>
 const v = document.getElementById('v');
+const img = document.getElementById('img');
 const tile = document.getElementById('tile');
 const tctx = tile.getContext('2d');
 const cell = document.createElement('canvas');
 const cctx = cell.getContext('2d');
 let currentUrl = null, raf = null;
+let type = 'video', imgLoaded = false, mediaPaused = false;
 let opt = { volume: 0.5, muted: true, loop: true, fit: 'cover', sharpness: 1, scale: 100 };
 
+function sourceEl() { return type === 'image' ? img : v; }
+function isPlaying() { return type === 'image' ? (imgLoaded && !mediaPaused) : (!v.paused && !v.ended); }
 function report(extra) {
-  window.wallpaperHost.report({ playing: !v.paused && !v.ended, currentTime: v.currentTime || 0, duration: v.duration || 0, ...extra });
+  window.wallpaperHost.report({
+    playing: isPlaying(),
+    currentTime: type === 'image' ? 0 : (v.currentTime || 0),
+    duration: type === 'image' ? 0 : (v.duration || 0),
+    ...extra
+  });
 }
 function sizeTile() {
   tile.width = Math.round(innerWidth * devicePixelRatio);
@@ -36,11 +47,14 @@ function sizeTile() {
 }
 function drawTile() {
   if (opt.fit !== 'tile') { raf = null; return; }
-  const sc = opt.scale / 100, vw = v.videoWidth || 16, vh = v.videoHeight || 9;
+  const src = sourceEl();
+  const sc = opt.scale / 100;
+  const vw = (type === 'image' ? img.naturalWidth : v.videoWidth) || 16;
+  const vh = (type === 'image' ? img.naturalHeight : v.videoHeight) || 9;
   const cw = Math.max(1, Math.round(vw * sc)), ch = Math.max(1, Math.round(vh * sc));
   if (cell.width !== cw) cell.width = cw;
   if (cell.height !== ch) cell.height = ch;
-  cctx.drawImage(v, 0, 0, cw, ch);
+  cctx.drawImage(src, 0, 0, cw, ch);
   tctx.setTransform(1, 0, 0, 1, 0, 0);
   tctx.fillStyle = tctx.createPattern(cell, 'repeat');
   tctx.fillRect(0, 0, tile.width, tile.height);
@@ -49,42 +63,68 @@ function drawTile() {
 function applyAll() {
   v.volume = opt.volume; v.muted = opt.muted; v.loop = opt.loop;
   const isTile = opt.fit === 'tile';
-  v.style.objectFit = isTile ? 'cover' : (opt.fit === 'center' ? 'none' : opt.fit);
-  v.style.visibility = isTile ? 'hidden' : 'visible';
-  v.style.transform = isTile ? 'none' : 'scale(' + (opt.scale / 100) + ')';
+  const fit = isTile ? 'cover' : (opt.fit === 'center' ? 'none' : opt.fit);
+  const vis = isTile ? 'hidden' : 'visible';
+  const tf = isTile ? 'none' : 'scale(' + (opt.scale / 100) + ')';
   const filt = opt.sharpness > 0 ? 'url(#sh' + opt.sharpness + ')' : 'none';
-  v.style.filter = filt; tile.style.filter = filt;
+  for (const el of [v, img]) {
+    el.style.objectFit = fit;
+    el.style.visibility = vis;
+    el.style.transform = tf;
+    el.style.filter = filt;
+  }
+  // 仅当前类型的元素可见
+  v.style.display = type === 'video' ? 'block' : 'none';
+  img.style.display = type === 'image' ? 'block' : 'none';
+  tile.style.filter = filt;
   tile.style.display = isTile ? 'block' : 'none';
   if (isTile) { sizeTile(); if (!raf) drawTile(); }
   else if (raf) { cancelAnimationFrame(raf); raf = null; }
 }
 
-window.wallpaperHost.onLoadVideo(data => {
+window.wallpaperHost.onLoadMedia(data => {
   currentUrl = data.url;
+  type = data.type === 'image' ? 'image' : 'video';
   Object.assign(opt, { volume: data.volume, muted: data.muted, loop: data.loop, fit: data.fit, sharpness: data.sharpness, scale: data.scale });
-  v.src = data.url;
+  mediaPaused = false;
+  if (type === 'image') {
+    v.pause(); v.removeAttribute('src'); v.load();
+    imgLoaded = false;
+    img.src = data.url;
+  } else {
+    imgLoaded = false; img.removeAttribute('src');
+    v.src = data.url;
+    v.pause();
+  }
   applyAll();
-  v.pause();
   report({ error: null });
 });
 window.wallpaperHost.onCommand(cmd => {
   if (cmd === 'play') {
-    if (!v.src && currentUrl) v.src = currentUrl;
-    v.play().then(() => report({ error: null })).catch(err => report({ error: String(err) }));
+    mediaPaused = false;
+    if (type === 'video') {
+      if (!v.src && currentUrl) v.src = currentUrl;
+      v.play().then(() => report({ error: null })).catch(err => report({ error: String(err) }));
+    } else report({ error: null });
   } else if (cmd === 'pause') {
-    v.pause();
+    mediaPaused = true;
+    if (type === 'video') v.pause();
+    report();
   }
 });
 window.wallpaperHost.onOptions(o => { Object.assign(opt, o); applyAll(); });
 
 v.addEventListener('play', () => report());
 v.addEventListener('pause', () => report());
+v.addEventListener('ended', () => report({ ended: true }));
 v.addEventListener('error', () => {
   const codes = { 1: '加载中止', 2: '网络错误', 3: '解码错误', 4: '文件无法播放（格式不支持或已损坏）' };
   report({ error: v.error ? (codes[v.error.code] || v.error.message) : '未知播放错误' });
 });
+img.addEventListener('load', () => { imgLoaded = true; applyAll(); report({ error: null }); });
+img.addEventListener('error', () => { imgLoaded = false; report({ error: '图片无法加载（格式不支持或已损坏）' }); });
 addEventListener('resize', () => { if (opt.fit === 'tile') sizeTile(); });
-setInterval(() => { if (v.src) report(); }, 1000);
+setInterval(() => { if (currentUrl) report(); }, 1000);
 </script>
 </body>
 </html>
