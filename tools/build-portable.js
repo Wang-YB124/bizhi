@@ -7,8 +7,8 @@ const ROOT = path.resolve(__dirname, '..');
 const RUNTIME = path.join(ROOT, 'runtime', 'electron');
 const DIST = path.join(ROOT, 'dist');
 const STAGE = path.join(DIST, 'stage');
-const APPDIR = path.join(STAGE, '视频壁纸');
-const ZIP = path.join(DIST, '视频壁纸-portable-win-x64.zip');
+const APPDIR = path.join(STAGE, '壁纸');
+const ZIP = path.join(DIST, '壁纸-portable-win-x64.zip');
 
 function rm(p) { fs.rmSync(p, { recursive: true, force: true }); }
 function walk(dir, base = dir, out = []) {
@@ -57,7 +57,7 @@ rm(STAGE); fs.mkdirSync(APPDIR, { recursive: true });
 fs.cpSync(RUNTIME, APPDIR, { recursive: true });
 
 console.log('2) 重命名主程序…');
-fs.renameSync(path.join(APPDIR, 'electron.exe'), path.join(APPDIR, '视频壁纸.exe'));
+fs.renameSync(path.join(APPDIR, 'electron.exe'), path.join(APPDIR, '壁纸.exe'));
 
 console.log('3) 裁剪 locales / 默认应用 / WebGPU 编译器…');
 const locDir = path.join(APPDIR, 'locales');
@@ -79,7 +79,7 @@ packAsar(appFiles, path.join(APPDIR, 'resources', 'app.asar'));
 console.log('   纳入 ' + appFiles.length + ' 个文件');
 
 fs.writeFileSync(path.join(APPDIR, '使用说明.txt'),
-  '视频壁纸 · 便携版\r\n\r\n双击「视频壁纸.exe」启动。\r\n在控制面板选择或拖入视频（MP4/WebM/M4V/OGV），视频即在桌面图标后方播放。\r\n关闭窗口最小化到托盘，右键托盘图标退出。\r\n设置保存在 %APPDATA%/video-wallpaper，本目录不含任何个人数据。\r\n');
+  '壁纸 · 便携版\r\n\r\n双击「壁纸.exe」启动。\r\n在控制面板选择或拖入视频（MP4/WebM/M4V/OGV）或图片（JPG/PNG/WebP/BMP/GIF），即在桌面图标后方播放。\r\n关闭窗口最小化到托盘，右键托盘图标退出。\r\n设置保存在 %APPDATA%/video-wallpaper，本目录不含任何个人数据。\r\n');
 
 const stageSize = dirSize(STAGE);
 console.log('5) 压缩为 zip…');
@@ -87,7 +87,7 @@ rm(ZIP);
 const tar = 'C:\\Windows\\System32\\tar.exe';
 let r;
 if (fs.existsSync(tar)) {
-  r = spawnSync(tar, ['-a', '-cf', ZIP, '-C', STAGE, '视频壁纸'], { encoding: 'utf8' });
+  r = spawnSync(tar, ['-a', '-cf', ZIP, '-C', STAGE, '壁纸'], { encoding: 'utf8' });
 } else {
   r = spawnSync('powershell.exe', ['-NoProfile', '-Command', `Compress-Archive -Path '${APPDIR}' -DestinationPath '${ZIP}' -Force`], { encoding: 'utf8' });
 }

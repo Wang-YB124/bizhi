@@ -193,7 +193,7 @@ function createWallpaperWindow() {
 }
 function createControlWindow() {
   controlWin = new BrowserWindow({
-    width: 520, height: 900, resizable: false, title: '视频壁纸', icon: ICON_PATH,
+    width: 1040, height: 760, resizable: false, title: '壁纸', icon: ICON_PATH,
     backgroundColor: '#0b0e14', autoHideMenuBar: true,
     webPreferences: { preload: path.join(__dirname, 'preload-control.js'), contextIsolation: true, nodeIntegration: false }
   });
@@ -231,7 +231,7 @@ function trayToggle() { playState.status === 'playing' ? doPause() : doPlay(); }
 
 function createTray() {
   tray = new Tray(nativeImage.createFromPath(ICON_PATH).resize({ width: 16, height: 16 }));
-  tray.setToolTip('视频壁纸');
+  tray.setToolTip('壁纸');
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: '打开控制面板', click: showControl },
     { label: '播放 / 暂停', click: trayToggle },

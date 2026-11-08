@@ -1,7 +1,7 @@
 {
   "name": "video-wallpaper",
   "version": "1.0.0",
-  "description": "Windows 桌面视频壁纸：在桌面图标后面循环播放视频",
+  "description": "Windows 桌面壁纸：在桌面图标后面播放视频 / 图片",
   "main": "src/main.js",
   "private": true
 }

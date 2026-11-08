@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<title>视频壁纸</title>
+<title>壁纸</title>
 <style>
   :root {
     --ink: #0b0e14; --panel: rgba(22,27,38,.72); --panel-2: rgba(30,37,52,.6);
@@ -19,7 +19,7 @@
   html, body { height: 100%; }
   body {
     font-family: var(--body); color: var(--txt); background: var(--ink);
-    font-size: 13px; overflow-y: auto; overflow-x: hidden; position: relative;
+    font-size: 13px; overflow: hidden; position: relative;
     -webkit-font-smoothing: antialiased;
   }
   body::before {
@@ -38,11 +38,21 @@
   ::-webkit-scrollbar-thumb { background: rgba(120,140,180,.25); border-radius: 8px; }
   ::-webkit-scrollbar-thumb:hover { background: rgba(120,140,180,.4); }
 
-  .wrap { padding: 20px 20px 26px; max-width: 520px; margin: 0 auto; }
+  .wrap { height: 100%; display: flex; flex-direction: column; padding: 18px 24px 16px; max-width: 1040px; margin: 0 auto; }
+  .layout { flex: 1; min-height: 0; display: grid; grid-template-columns: 400px minmax(0, 1fr); gap: 16px; }
+  .col { display: flex; flex-direction: column; min-height: 0; }
+  .col > * { flex-shrink: 0; }
+  .col .hcard { flex: 1; min-height: 120px; display: flex; flex-direction: column; }
+  .col .hcard .hlist { flex: 1; max-height: none; min-height: 0; }
+  .sgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; align-content: start; min-height: 0; overflow-y: auto; }
+  .sgrid .card { margin-bottom: 0; }
+  .sgrid .tall { grid-row: span 2; }
+  .sgrid .wide { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr; gap: 0 22px; }
+  .sgrid .wide .card-title { grid-column: 1 / -1; }
   .rise { opacity: 0; animation: rise .55s cubic-bezier(.2,.7,.2,1) forwards; }
   @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 
-  header { display: flex; align-items: center; gap: 13px; margin-bottom: 18px; }
+  header { display: flex; align-items: center; gap: 13px; margin-bottom: 14px; flex-shrink: 0; }
   .logo { width: 46px; height: 46px; border-radius: 13px; flex-shrink: 0;
     box-shadow: 0 6px 20px color-mix(in srgb, var(--cyan) 28%, transparent), inset 0 0 0 1px rgba(255,255,255,.12); }
   .htext { flex: 1; min-width: 0; }
@@ -90,7 +100,7 @@
   .badge.image { color: var(--amber); background: color-mix(in srgb, var(--amber) 14%, transparent); }
   .badge.invalid { color: var(--red); background: rgba(255,107,125,.14); }
 
-  .transport { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 4px 0 18px; }
+  .transport { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 2px 0 12px; }
   .ibtn { width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--line); cursor: pointer;
     background: var(--panel-2); color: var(--txt); display: grid; place-items: center;
     transition: transform .15s, border-color .2s, box-shadow .2s, background .2s; }
@@ -187,7 +197,7 @@
 
   footer { font-size: 11px; color: var(--dim); line-height: 1.8; padding: 2px 4px; }
   footer b { color: var(--mut); font-weight: 600; }
-  .drop-hint { text-align: center; color: var(--dim); font-size: 11px; margin: -6px 0 14px; }
+  .drop-hint { text-align: center; color: var(--dim); font-size: 11px; margin: -6px 0 10px; }
   body.dragover::before { background: radial-gradient(60% 50% at 50% 40%, color-mix(in srgb, var(--cyan) 28%, transparent), transparent 70%); }
 
   /* ---- 润色：弹性 / 层次 / 环境光 ---- */
@@ -238,8 +248,8 @@
 
   /* ---- 界面外观：主题色 / 色度 ---- */
   .logo { filter: hue-rotate(calc((var(--uh) - 240) * 1deg)) saturate(calc(var(--usn) / 73)); }
-  .swatches { display: flex; gap: 9px; margin-bottom: 11px; }
-  .swatch { width: 26px; height: 26px; border-radius: 50%; border: none; cursor: pointer;
+  .swatches { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 11px; }
+  .swatch { width: 24px; height: 24px; border-radius: 50%; border: none; cursor: pointer;
     box-shadow: inset 0 0 0 1px rgba(255,255,255,.18);
     transition: transform .25s var(--spring), box-shadow .25s; }
   .swatch:hover { transform: scale(1.18); }
@@ -259,12 +269,14 @@
   <header class="rise" style="animation-delay:.02s">
     <img class="logo" src="../assets/icon.png" alt="">
     <div class="htext">
-      <div class="eyebrow">Desktop Video Wallpaper</div>
-      <h1>视频壁纸</h1>
+      <div class="eyebrow">Desktop Wallpaper</div>
+      <h1>壁纸</h1>
     </div>
     <span class="pill" id="pill"><span class="dot"></span><span id="pilltext">空闲</span></span>
   </header>
 
+  <div class="layout">
+  <div class="col">
   <div class="card rise" id="npcard" style="animation-delay:.08s">
     <div class="np-top">
       <div class="np-file">
@@ -293,27 +305,29 @@
       <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
     </button>
   </div>
-  <div class="drop-hint rise" style="animation-delay:.16s">视频 MP4 / WebM / M4V / OGV · 图片 JPG / PNG / WebP / BMP / GIF · 可拖拽</div>
+  <div class="drop-hint rise" style="animation-delay:.16s">MP4 / WebM / M4V / OGV · JPG / PNG / WebP / BMP / GIF · 可拖拽</div>
 
-  <div class="card rise" style="animation-delay:.2s">
+  <div class="card rise hcard" style="animation-delay:.2s">
     <div class="card-title">媒体历史 <span class="count" id="hcount">0</span></div>
     <div class="hlist" id="hlist"></div>
   </div>
 
-  <div class="card rise" style="animation-delay:.24s">
-    <div class="card-title">轮播</div>
-    <div class="switchrow" style="padding-top:0">
-      <div class="sl"><b>自动轮播</b><small>视频播完 / 图片停留到期后切换下一个</small></div>
-      <label class="switch"><input type="checkbox" id="carousel"><span class="knob"></span></label>
-    </div>
-    <div class="field" style="margin-top:12px">
-      <div class="flabel"><b>图片停留时长</b><span id="dwellval">10 秒</span></div>
-      <input type="range" id="dwell" min="1" max="60" step="1" value="10">
-      <div class="hint">开启轮播时视频单次播放（覆盖循环开关）；关闭轮播保持单媒体循环 / 图片静态。</div>
+  <div class="card rise" style="animation-delay:.4s">
+    <div class="card-title">系统</div>
+    <div class="switchrow">
+      <div class="sl"><b>开机自动启动</b><small>登录后自动运行并恢复上次壁纸</small></div>
+      <label class="switch"><input type="checkbox" id="autostart"><span class="knob"></span></label>
     </div>
   </div>
 
-  <div class="card rise" style="animation-delay:.28s">
+  <footer class="rise" style="animation-delay:.46s">
+    <div>嵌入方式 <b id="mode">—</b> · 原生 <b id="nativeres">—</b></div>
+    <div>关闭窗口会最小化到系统托盘，右键托盘图标可退出。</div>
+  </footer>
+  </div>
+
+  <div class="sgrid">
+  <div class="card rise tall" style="animation-delay:.28s">
     <div class="card-title">画面设置</div>
     <div class="field">
       <div class="flabel"><b>填充效果</b></div>
@@ -355,6 +369,19 @@
     </div>
   </div>
 
+  <div class="card rise" style="animation-delay:.24s">
+    <div class="card-title">轮播</div>
+    <div class="switchrow" style="padding-top:0">
+      <div class="sl"><b>自动轮播</b><small>视频播完 / 图片停留到期后切换下一个</small></div>
+      <label class="switch"><input type="checkbox" id="carousel"><span class="knob"></span></label>
+    </div>
+    <div class="field" style="margin-top:12px">
+      <div class="flabel"><b>图片停留时长</b><span id="dwellval">10 秒</span></div>
+      <input type="range" id="dwell" min="1" max="60" step="1" value="10">
+      <div class="hint">开启轮播时视频单次播放（覆盖循环开关）；关闭轮播保持单媒体循环 / 图片静态。</div>
+    </div>
+  </div>
+
   <div class="card rise" style="animation-delay:.34s">
     <div class="card-title">声音</div>
     <div class="field">
@@ -371,15 +398,7 @@
     </div>
   </div>
 
-  <div class="card rise" style="animation-delay:.4s">
-    <div class="card-title">系统</div>
-    <div class="switchrow">
-      <div class="sl"><b>开机自动启动</b><small>登录后自动运行并恢复上次壁纸</small></div>
-      <label class="switch"><input type="checkbox" id="autostart"><span class="knob"></span></label>
-    </div>
-  </div>
-
-  <div class="card rise" style="animation-delay:.43s">
+  <div class="card rise wide" style="animation-delay:.43s">
     <div class="card-title">界面外观</div>
     <div class="field">
       <div class="flabel"><b>主题色</b><span id="hueval">170°</span></div>
@@ -392,11 +411,8 @@
       <div class="hint">只调整控制面板配色，不影响壁纸画面。<button class="linkbtn" id="themereset">恢复默认</button></div>
     </div>
   </div>
-
-  <footer class="rise" style="animation-delay:.46s">
-    <div>嵌入方式 <b id="mode">—</b> · 原生 <b id="nativeres">—</b></div>
-    <div>关闭窗口会最小化到系统托盘，右键托盘图标可退出。</div>
-  </footer>
+  </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"><span id="toastmsg"></span><button id="undo">撤销</button></div>
@@ -456,7 +472,6 @@ function renderHistory(hist) {
   for (const h of hist) {
     const row = document.createElement('div');
     row.className = 'hitem' + (h.current ? ' current' : '') + (h.valid ? '' : ' invalid');
-    row.title = h.path + (h.valid ? '' : '（文件不存在）');
     const thumb = document.createElement('div'); thumb.className = 'hthumb';
     if (h.type === 'image' && h.valid) { const im = document.createElement('img'); im.src = fileUrl(h.path); im.alt = ''; thumb.appendChild(im); }
     else thumb.innerHTML = h.type === 'image' ? IMAGE_ICO : VIDEO_ICO;
