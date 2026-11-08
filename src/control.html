@@ -185,9 +185,56 @@
   footer b { color: var(--mut); font-weight: 600; }
   .drop-hint { text-align: center; color: var(--dim); font-size: 11px; margin: -6px 0 14px; }
   body.dragover::before { background: radial-gradient(60% 50% at 50% 40%, rgba(53,224,196,.28), transparent 70%); }
+
+  /* ---- 润色：弹性 / 层次 / 环境光 ---- */
+  :root { --spring: cubic-bezier(.34,1.56,.64,1); --ease: cubic-bezier(.2,.7,.2,1); }
+  .ambient { position: fixed; inset: -20%; z-index: -1; pointer-events: none; filter: blur(60px); opacity: .55;
+    background:
+      radial-gradient(38% 30% at 20% 12%, rgba(53,224,196,.14), transparent 70%),
+      radial-gradient(34% 28% at 82% 86%, rgba(255,180,84,.10), transparent 70%);
+    animation: drift 26s ease-in-out infinite alternate; }
+  @keyframes drift { from { transform: translate3d(-2%, -1%, 0) scale(1); } to { transform: translate3d(2%, 2%, 0) scale(1.06); } }
+
+  .card { box-shadow: 0 10px 30px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.045);
+    transition: border-color .3s var(--ease), transform .3s var(--ease), box-shadow .3s var(--ease); }
+  .card:hover { transform: translateY(-1px); box-shadow: 0 14px 36px rgba(0,0,0,.34), inset 0 1px 0 rgba(255,255,255,.06); }
+
+  .seg { position: relative; }
+  .seg-ind { position: absolute; top: 5px; bottom: 5px; left: 5px; width: 0; border-radius: 8px; z-index: 0;
+    background: linear-gradient(145deg, rgba(53,224,196,.22), rgba(18,179,154,.12));
+    box-shadow: inset 0 0 0 1px rgba(53,224,196,.35), 0 2px 10px rgba(18,179,154,.18);
+    transition: left .35s var(--spring), width .35s var(--spring); pointer-events: none; }
+  .seg button { position: relative; z-index: 1; transition: color .25s var(--ease); }
+  .seg button:hover { background: transparent; }
+  .seg button.on { background: transparent; box-shadow: none; }
+
+  .hitem { transition: background .25s var(--ease), border-color .25s var(--ease), opacity .25s, transform .25s var(--ease); }
+  .hitem:hover { transform: translateX(3px); }
+  .hthumb img { transition: transform .4s var(--ease); }
+  .hitem:hover .hthumb img { transform: scale(1.1); }
+  .hdel { transition: opacity .2s, color .2s, background .2s, transform .2s var(--spring); }
+  .hdel:active { transform: scale(.85); }
+
+  .ibtn, .play-btn { transition: transform .25s var(--spring), border-color .25s, box-shadow .25s, background .25s, filter .25s; }
+  .ibtn:active { transform: scale(.88); }
+  .play-btn:active { transform: scale(.92); }
+  body.is-playing .play-btn { animation: breathe 2.6s ease-in-out infinite; }
+  @keyframes breathe { 0%,100% { box-shadow: 0 10px 28px rgba(18,179,154,.42), inset 0 1px 0 rgba(255,255,255,.4); } 50% { box-shadow: 0 10px 40px rgba(18,179,154,.62), inset 0 1px 0 rgba(255,255,255,.4); } }
+
+  .switch .knob::after { transition: transform .35s var(--spring), background .25s; }
+  .switch input:checked + .knob { box-shadow: 0 0 14px rgba(53,224,196,.35); }
+
+  input[type=range]::-webkit-slider-thumb { transition: transform .25s var(--spring), box-shadow .25s; }
+  input[type=range]:active::-webkit-slider-thumb { transform: scale(1.25); box-shadow: 0 0 0 6px rgba(53,224,196,.15), 0 2px 8px rgba(18,179,154,.5); }
+
+  .toast { transition: transform .4s var(--spring), opacity .3s; }
+  .pill { transition: color .3s, border-color .3s; }
+  ::-webkit-scrollbar { width: 6px; }
+  :focus-visible { outline: 2px solid rgba(53,224,196,.5); outline-offset: 2px; border-radius: 6px; }
 </style>
 </head>
 <body>
+<div class="ambient"></div>
 <div class="wrap">
   <header class="rise" style="animation-delay:.02s">
     <img class="logo" src="../assets/icon.png" alt="">
@@ -251,6 +298,7 @@
     <div class="field">
       <div class="flabel"><b>填充效果</b></div>
       <div class="seg" id="fitseg">
+        <i class="seg-ind"></i>
         <button data-fit="cover"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15l5-4 4 3 4-5 5 6"/></svg>填充</button>
         <button data-fit="contain"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2"/><rect x="7" y="9" width="10" height="6" rx="1"/></svg>适应</button>
         <button data-fit="fill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4"/></svg>拉伸</button>
@@ -277,6 +325,7 @@
     <div class="field">
       <div class="flabel"><b>清晰度 · 锐化</b><span id="shval">轻度</span></div>
       <div class="seg simple" id="shseg">
+        <i class="seg-ind"></i>
         <button data-sh="0">关闭</button><button data-sh="1">轻度</button><button data-sh="2">标准</button><button data-sh="3">强烈</button>
       </div>
     </div>
@@ -326,8 +375,16 @@ const IMG_EXT = ['jpg', 'jpeg', 'png', 'webp', 'bmp', 'gif'];
 function extType(p) { const e = (p || '').split('.').pop().toLowerCase(); return IMG_EXT.includes(e) ? 'image' : 'video'; }
 function baseName(p) { return (p || '').split(/[\\/]/).pop(); }
 function fileUrl(p) { const parts = p.replace(/\\/g, '/').split('/'); return 'file:///' + parts.map((x, i) => i === 0 ? x : encodeURIComponent(x)).join('/'); }
-function fmt(t) { t = Math.max(0, Math.floor(t || 0)); return String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0'); }
+function fmt(t) { if (!isFinite(t)) return '--:--'; t = Math.max(0, Math.floor(t)); return String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0'); }
 function paintRange(el) { const p = (el.value - el.min) / (el.max - el.min) * 100; el.style.setProperty('--p', p + '%'); }
+function placeSeg(seg) {
+  const ind = seg.querySelector('.seg-ind'); if (!ind) return;
+  const on = seg.querySelector('button.on');
+  if (!on) { ind.style.width = '0'; return; }
+  ind.style.left = on.offsetLeft + 'px';
+  ind.style.width = on.offsetWidth + 'px';
+}
+function placeAllSegs() { placeSeg($('fitseg')); placeSeg($('shseg')); }
 
 const VIDEO_ICO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 9l5 3-5 3z" fill="currentColor" stroke="none"/></svg>';
 const IMAGE_ICO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="M21 15l-5-4-9 8"/></svg>';
@@ -393,6 +450,7 @@ function render(s) {
   pill.className = 'pill ' + (status === 'playing' ? 'playing' : status === 'paused' ? 'paused' : status === 'error' ? 'error' : '');
   pilltext.textContent = { playing: '播放中', paused: '已暂停', stopped: '已停止 · 桌面已恢复', error: '出错' }[status] || '空闲';
   npcard.classList.toggle('playing-card', status === 'playing' && ctype === 'video');
+  document.body.classList.toggle('is-playing', status === 'playing');
   $('primaryicon').innerHTML = status === 'playing' ? PAUSE : PLAY;
   $('primary').title = status === 'playing' ? '暂停' : (status === 'paused' ? '继续' : '开始');
   $('stop').disabled = status === 'stopped';
@@ -401,7 +459,7 @@ function render(s) {
     $('cur').textContent = '图片';
     $('dur').textContent = st.carousel ? '停留 ' + st.dwell + 's' : '静态';
   } else {
-    $('bar').style.width = ps.duration ? (ps.currentTime / ps.duration * 100) + '%' : '0';
+    $('bar').style.width = (isFinite(ps.duration) && ps.duration > 0) ? (ps.currentTime / ps.duration * 100) + '%' : '0';
     $('cur').textContent = fmt(ps.currentTime); $('dur').textContent = fmt(ps.duration);
   }
   $('err').style.display = ps.error ? 'block' : 'none'; $('err').textContent = ps.error ? '播放失败：' + ps.error : '';
@@ -415,6 +473,7 @@ function render(s) {
 
   document.querySelectorAll('#fitseg button').forEach(b => b.classList.toggle('on', b.dataset.fit === st.fit));
   document.querySelectorAll('#shseg button').forEach(b => b.classList.toggle('on', Number(b.dataset.sh) === st.sharpness));
+  placeAllSegs();
   $('shval').textContent = SH[st.sharpness] || '关闭';
   $('resolution').value = String(st.resolution);
   $('resval').textContent = st.resolution === 'auto' ? '自动' : st.resolution + '%';
@@ -455,6 +514,7 @@ document.addEventListener('drop', e => {
 });
 window.api.onState(render);
 window.api.getState().then(render);
+addEventListener('resize', placeAllSegs);
 </script>
 </body>
 </html>
