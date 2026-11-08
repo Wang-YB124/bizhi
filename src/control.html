@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>视频壁纸</title>
+<style>
+  :root {
+    --ink: #0b0e14; --panel: rgba(22,27,38,.72); --panel-2: rgba(30,37,52,.6);
+    --line: rgba(120,140,180,.16); --txt: #e7ecf5; --mut: #8b97ad; --dim: #5b6678;
+    --cyan: #35e0c4; --cyan-d: #12b39a; --amber: #ffb454; --red: #ff6b7d;
+    --r: 16px; --disp: "Bahnschrift", "DIN Alternate", "Microsoft YaHei UI", sans-serif;
+    --body: "Microsoft YaHei UI", "Segoe UI", sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: var(--body); color: var(--txt); background: var(--ink);
+    font-size: 13px; overflow-y: auto; overflow-x: hidden; position: relative;
+    -webkit-font-smoothing: antialiased;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(60% 45% at 12% -5%, rgba(53,224,196,.16), transparent 60%),
+      radial-gradient(55% 45% at 105% 108%, rgba(255,180,84,.12), transparent 60%),
+      linear-gradient(180deg, #0c1018, #0b0e14 40%);
+    background-color: var(--ink);
+  }
+  body::after {
+    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .035;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-thumb { background: rgba(120,140,180,.25); border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(120,140,180,.4); }
+
+  .wrap { padding: 20px 20px 26px; max-width: 520px; margin: 0 auto; }
+  .rise { opacity: 0; animation: rise .55s cubic-bezier(.2,.7,.2,1) forwards; }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+  header { display: flex; align-items: center; gap: 13px; margin-bottom: 18px; }
+  .logo { width: 46px; height: 46px; border-radius: 13px; flex-shrink: 0;
+    box-shadow: 0 6px 20px rgba(53,224,196,.28), inset 0 0 0 1px rgba(255,255,255,.12); }
+  .htext { flex: 1; min-width: 0; }
+  .eyebrow { font-family: var(--disp); font-size: 10px; letter-spacing: .22em; color: var(--cyan); text-transform: uppercase; }
+  h1 { font-family: var(--disp); font-size: 23px; font-weight: 700; letter-spacing: .02em; line-height: 1.15; }
+  .pill { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 30px;
+    background: var(--panel-2); border: 1px solid var(--line); font-size: 11.5px; color: var(--mut); white-space: nowrap; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); }
+  .pill.playing { color: var(--cyan); border-color: rgba(53,224,196,.3); }
+  .pill.playing .dot { background: var(--cyan); animation: pulse 1.4s ease-in-out infinite; }
+  .pill.paused { color: var(--amber); } .pill.paused .dot { background: var(--amber); }
+  .pill.error { color: var(--red); } .pill.error .dot { background: var(--red); }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(53,224,196,.5); } 50% { box-shadow: 0 0 0 5px rgba(53,224,196,0); } }
+
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r);
+    padding: 16px; margin-bottom: 14px; backdrop-filter: blur(12px);
+    box-shadow: 0 10px 30px rgba(0,0,0,.28); transition: border-color .25s, transform .25s; }
+  .card:hover { border-color: rgba(120,140,180,.28); }
+  .card-title { font-family: var(--disp); font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--mut); margin-bottom: 13px; display: flex; align-items: center; gap: 8px; }
+  .card-title::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+
+  .np-top { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .np-file { flex: 1; min-width: 0; }
+  .np-name { font-size: 13.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .np-sub { font-size: 11px; color: var(--dim); margin-top: 2px; }
+  .eq { display: flex; align-items: flex-end; gap: 3px; height: 22px; opacity: .3; transition: opacity .3s; }
+  .eq i { width: 3.5px; background: linear-gradient(var(--cyan), var(--cyan-d)); border-radius: 2px; height: 30%; }
+  .playing-card .eq { opacity: 1; }
+  .playing-card .eq i { animation: eq 1s ease-in-out infinite; }
+  .eq i:nth-child(2){animation-delay:.15s}.eq i:nth-child(3){animation-delay:.3s}.eq i:nth-child(4){animation-delay:.45s}.eq i:nth-child(5){animation-delay:.6s}
+  @keyframes eq { 0%,100%{height:25%} 50%{height:100%} }
+  .track { height: 6px; border-radius: 6px; background: rgba(120,140,180,.16); overflow: hidden; }
+  .track > i { display: block; height: 100%; width: 0; border-radius: 6px;
+    background: linear-gradient(90deg, var(--cyan-d), var(--cyan), var(--amber)); transition: width .4s linear; }
+  .time { display: flex; justify-content: space-between; font-family: var(--disp); font-size: 12px;
+    color: var(--mut); margin-top: 7px; font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+  .err { display: none; margin-top: 10px; padding: 8px 11px; border-radius: 10px; font-size: 12px;
+    background: rgba(255,107,125,.1); border: 1px solid rgba(255,107,125,.3); color: var(--red); }
+
+  .transport { display: flex; align-items: center; justify-content: center; gap: 20px; margin: 4px 0 18px; }
+  .ibtn { width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--line); cursor: pointer;
+    background: var(--panel-2); color: var(--txt); display: grid; place-items: center;
+    transition: transform .15s, border-color .2s, box-shadow .2s, background .2s; }
+  .ibtn:hover { border-color: rgba(53,224,196,.45); box-shadow: 0 0 18px rgba(53,224,196,.2); color: var(--cyan); }
+  .ibtn:active { transform: scale(.9); }
+  .ibtn:disabled { opacity: .32; cursor: default; box-shadow: none; border-color: var(--line); color: var(--dim); }
+  .ibtn svg { width: 20px; height: 20px; }
+  .play-btn { width: 68px; height: 68px; border: none; border-radius: 50%; cursor: pointer; color: #06231f;
+    background: linear-gradient(145deg, #5cf0d6, var(--cyan-d)); display: grid; place-items: center;
+    box-shadow: 0 10px 28px rgba(18,179,154,.42), inset 0 1px 0 rgba(255,255,255,.4);
+    transition: transform .15s, box-shadow .2s, filter .2s; }
+  .play-btn:hover { filter: brightness(1.08); box-shadow: 0 12px 34px rgba(18,179,154,.55); }
+  .play-btn:active { transform: scale(.93); }
+  .play-btn svg { width: 26px; height: 26px; }
+
+  .field { margin-bottom: 15px; } .field:last-child { margin-bottom: 0; }
+  .flabel { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .flabel b { font-size: 12.5px; font-weight: 600; color: var(--txt); }
+  .flabel span { font-family: var(--disp); font-size: 12px; color: var(--cyan); font-variant-numeric: tabular-nums; }
+  .hint { font-size: 11px; color: var(--dim); margin-top: 6px; }
+
+  .seg { display: flex; gap: 5px; background: rgba(10,13,20,.5); padding: 5px; border-radius: 12px; border: 1px solid var(--line); }
+  .seg button { flex: 1; border: none; cursor: pointer; background: transparent; color: var(--mut);
+    padding: 8px 4px; border-radius: 8px; font-family: var(--body); font-size: 12px;
+    display: flex; flex-direction: column; align-items: center; gap: 4px; transition: all .2s; }
+  .seg button svg { width: 17px; height: 17px; opacity: .8; }
+  .seg button:hover { color: var(--txt); background: rgba(120,140,180,.1); }
+  .seg button.on { background: linear-gradient(145deg, rgba(53,224,196,.22), rgba(18,179,154,.12));
+    color: var(--cyan); box-shadow: inset 0 0 0 1px rgba(53,224,196,.35); }
+  .seg.simple button { flex-direction: row; padding: 8px; }
+
+  .selwrap { position: relative; }
+  .selwrap select { appearance: none; width: 100%; padding: 10px 34px 10px 13px; cursor: pointer;
+    background: rgba(10,13,20,.5); color: var(--txt); border: 1px solid var(--line); border-radius: 11px;
+    font-family: var(--body); font-size: 12.5px; transition: border-color .2s; }
+  .selwrap select:hover, .selwrap select:focus { border-color: rgba(53,224,196,.45); outline: none; }
+  .selwrap svg { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px;
+    color: var(--mut); pointer-events: none; }
+  select option { background: #161b26; color: var(--txt); }
+
+  input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 6px; cursor: pointer;
+    background: linear-gradient(90deg, var(--cyan-d), var(--cyan)) 0/var(--p,50%) 100% no-repeat, rgba(120,140,180,.16); }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 17px; height: 17px; border-radius: 50%;
+    background: #eafff9; border: 3px solid var(--cyan-d); box-shadow: 0 2px 8px rgba(18,179,154,.5); transition: transform .15s; }
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.18); }
+
+  .switchrow { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; }
+  .switchrow + .switchrow { border-top: 1px solid var(--line); }
+  .switchrow .sl b { font-size: 12.5px; font-weight: 600; } .switchrow .sl small { display: block; color: var(--dim); font-size: 11px; margin-top: 2px; }
+  .switch { position: relative; width: 42px; height: 24px; flex-shrink: 0; cursor: pointer; }
+  .switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+  .switch .knob { position: absolute; inset: 0; border-radius: 24px; background: rgba(120,140,180,.22);
+    border: 1px solid var(--line); transition: background .25s; }
+  .switch .knob::after { content: ""; position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%;
+    background: #cfd8e6; transition: transform .25s cubic-bezier(.2,.7,.2,1), background .25s; box-shadow: 0 1px 4px rgba(0,0,0,.4); }
+  .switch input:checked + .knob { background: linear-gradient(145deg, var(--cyan), var(--cyan-d)); border-color: transparent; }
+  .switch input:checked + .knob::after { transform: translateX(18px); background: #06231f; }
+
+  footer { font-size: 11px; color: var(--dim); line-height: 1.8; padding: 2px 4px; }
+  footer b { color: var(--mut); font-weight: 600; }
+  .drop-hint { text-align: center; color: var(--dim); font-size: 11px; margin: -6px 0 14px; }
+  body.dragover::before { background: radial-gradient(60% 50% at 50% 40%, rgba(53,224,196,.28), transparent 70%); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="rise" style="animation-delay:.02s">
+    <img class="logo" src="../assets/icon.png" alt="">
+    <div class="htext">
+      <div class="eyebrow">Desktop Video Wallpaper</div>
+      <h1>视频壁纸</h1>
+    </div>
+    <span class="pill" id="pill"><span class="dot"></span><span id="pilltext">空闲</span></span>
+  </header>
+
+  <div class="card rise" id="npcard" style="animation-delay:.08s">
+    <div class="np-top">
+      <div class="np-file">
+        <div class="np-name" id="filename">未加载视频</div>
+        <div class="np-sub" id="filesub">点击下方文件夹按钮或拖入视频文件</div>
+      </div>
+      <div class="eq"><i></i><i></i><i></i><i></i><i></i></div>
+    </div>
+    <div class="track"><i id="bar"></i></div>
+    <div class="time"><span id="cur">00:00</span><span id="dur">00:00</span></div>
+    <div class="err" id="err"></div>
+  </div>
+
+  <div class="transport rise" style="animation-delay:.14s">
+    <button class="ibtn" id="open" title="选择视频">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+    </button>
+    <button class="play-btn" id="primary" title="开始"><svg id="primaryicon" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+    <button class="ibtn" id="stop" title="停止并恢复桌面">
+      <svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+    </button>
+  </div>
+  <div class="drop-hint rise" style="animation-delay:.16s">支持 MP4 / WebM / M4V / OGV · 可直接拖拽文件到窗口</div>
+
+  <div class="card rise" style="animation-delay:.2s">
+    <div class="card-title">画面设置</div>
+    <div class="field">
+      <div class="flabel"><b>填充效果</b></div>
+      <div class="seg" id="fitseg">
+        <button data-fit="cover"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15l5-4 4 3 4-5 5 6"/></svg>填充</button>
+        <button data-fit="contain"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2"/><rect x="7" y="9" width="10" height="6" rx="1"/></svg>适应</button>
+        <button data-fit="fill"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 9V5h4M20 9V5h-4M4 15v4h4M20 15v4h-4"/></svg>拉伸</button>
+        <button data-fit="center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"/></svg>居中</button>
+        <button data-fit="tile"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M9 5v14M15 5v14M3 12h18"/></svg>平铺</button>
+      </div>
+    </div>
+    <div class="field">
+      <div class="flabel"><b>渲染分辨率</b><span id="resval">自动</span></div>
+      <div class="selwrap">
+        <select id="resolution">
+          <option value="auto">自动 · 屏幕原生分辨率</option>
+          <option value="200">200% · 超采样</option>
+          <option value="150">150%</option>
+          <option value="125">125%</option>
+          <option value="100">100% · 原生</option>
+          <option value="75">75% · 性能</option>
+          <option value="50">50% · 省电</option>
+        </select>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+      </div>
+      <div class="hint" id="nativehint">原生分辨率 —</div>
+    </div>
+    <div class="field">
+      <div class="flabel"><b>清晰度 · 锐化</b><span id="shval">轻度</span></div>
+      <div class="seg simple" id="shseg">
+        <button data-sh="0">关闭</button><button data-sh="1">轻度</button><button data-sh="2">标准</button><button data-sh="3">强烈</button>
+      </div>
+    </div>
+    <div class="field">
+      <div class="flabel"><b>画面大小</b><span id="scaleval">100%</span></div>
+      <input type="range" id="scale" min="50" max="200" step="5" value="100">
+    </div>
+  </div>
+
+  <div class="card rise" style="animation-delay:.26s">
+    <div class="card-title">声音</div>
+    <div class="field">
+      <div class="flabel"><b>音量</b><span id="volval">50%</span></div>
+      <input type="range" id="vol" min="0" max="100" value="50">
+    </div>
+    <div class="switchrow">
+      <div class="sl"><b>静音</b><small>壁纸默认无声播放</small></div>
+      <label class="switch"><input type="checkbox" id="muted"><span class="knob"></span></label>
+    </div>
+    <div class="switchrow">
+      <div class="sl"><b>循环播放</b><small>播完自动从头继续</small></div>
+      <label class="switch"><input type="checkbox" id="loop"><span class="knob"></span></label>
+    </div>
+  </div>
+
+  <div class="card rise" style="animation-delay:.32s">
+    <div class="card-title">系统</div>
+    <div class="switchrow">
+      <div class="sl"><b>开机自动启动</b><small>登录后自动运行并恢复上次壁纸</small></div>
+      <label class="switch"><input type="checkbox" id="autostart"><span class="knob"></span></label>
+    </div>
+  </div>
+
+  <footer class="rise" style="animation-delay:.38s">
+    <div>嵌入方式 <b id="mode">—</b> · 原生 <b id="nativeres">—</b></div>
+    <div>关闭窗口会最小化到系统托盘，右键托盘图标可退出。</div>
+  </footer>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const pill = $('pill'), pilltext = $('pilltext'), npcard = $('npcard');
+const SH = ['关闭', '轻度', '标准', '强烈'];
+function fmt(t) { t = Math.max(0, Math.floor(t || 0)); return String(Math.floor(t / 60)).padStart(2, '0') + ':' + String(t % 60).padStart(2, '0'); }
+function paintRange(el) { const p = (el.value - el.min) / (el.max - el.min) * 100; el.style.setProperty('--p', p + '%'); }
+
+const PLAY = '<path d="M8 5v14l11-7z"/>', PAUSE = '<path d="M7 5h4v14H7zM13 5h4v14h-4z"/>';
+function render(s) {
+  const { settings: st, playState: ps, attachMode, native } = s;
+  $('filename').textContent = st.lastVideo ? st.lastVideo.split(/[\\/]/).pop() : '未加载视频';
+  $('filename').title = st.lastVideo || '';
+  $('filesub').textContent = st.lastVideo ? st.lastVideo : '点击下方文件夹按钮或拖入视频文件';
+  const status = ps.error ? 'error' : ps.status;
+  pill.className = 'pill ' + (status === 'playing' ? 'playing' : status === 'paused' ? 'paused' : status === 'error' ? 'error' : '');
+  pilltext.textContent = { playing: '播放中', paused: '已暂停', stopped: '已停止 · 桌面已恢复', error: '出错' }[status] || '空闲';
+  npcard.classList.toggle('playing-card', status === 'playing');
+  $('primaryicon').innerHTML = status === 'playing' ? PAUSE : PLAY;
+  $('primary').title = status === 'playing' ? '暂停' : (status === 'paused' ? '继续' : '开始');
+  $('stop').disabled = status === 'stopped';
+  $('bar').style.width = ps.duration ? (ps.currentTime / ps.duration * 100) + '%' : '0';
+  $('cur').textContent = fmt(ps.currentTime); $('dur').textContent = fmt(ps.duration);
+  $('err').style.display = ps.error ? 'block' : 'none'; $('err').textContent = ps.error ? '播放失败：' + ps.error : '';
+
+  document.querySelectorAll('#fitseg button').forEach(b => b.classList.toggle('on', b.dataset.fit === st.fit));
+  document.querySelectorAll('#shseg button').forEach(b => b.classList.toggle('on', Number(b.dataset.sh) === st.sharpness));
+  $('shval').textContent = SH[st.sharpness] || '关闭';
+  $('resolution').value = String(st.resolution);
+  $('resval').textContent = st.resolution === 'auto' ? '自动' : st.resolution + '%';
+  $('nativehint').textContent = '原生分辨率 ' + native.width + '×' + native.height + ' · 默认按物理像素 1:1 清晰渲染';
+  $('scale').value = st.scale; $('scaleval').textContent = st.scale + '%'; paintRange($('scale'));
+  $('vol').value = Math.round(st.volume * 100); $('volval').textContent = Math.round(st.volume * 100) + '%'; paintRange($('vol'));
+  $('muted').checked = st.muted; $('loop').checked = st.loop; $('autostart').checked = st.autostart;
+  $('mode').textContent = { workerw: 'WorkerW 图标后方', 'workerw-child': 'WorkerW 图标后方', progman: 'Progman 兼容' }[attachMode] || attachMode;
+  $('nativeres').textContent = native.width + '×' + native.height;
+}
+
+$('open').addEventListener('click', () => window.api.chooseFile());
+$('primary').addEventListener('click', async () => {
+  const s = await window.api.getState();
+  if (s.playState.status === 'playing') window.api.pause();
+  else { const ok = await window.api.play(); if (ok === false) window.api.chooseFile(); }
+});
+$('stop').addEventListener('click', () => window.api.stop());
+document.querySelectorAll('#fitseg button').forEach(b => b.addEventListener('click', () => window.api.setFit(b.dataset.fit)));
+document.querySelectorAll('#shseg button').forEach(b => b.addEventListener('click', () => window.api.setSharpness(Number(b.dataset.sh))));
+$('resolution').addEventListener('change', () => window.api.setResolution($('resolution').value === 'auto' ? 'auto' : Number($('resolution').value)));
+$('scale').addEventListener('input', () => { $('scaleval').textContent = $('scale').value + '%'; paintRange($('scale')); window.api.setScale(Number($('scale').value)); });
+$('vol').addEventListener('input', () => { $('volval').textContent = $('vol').value + '%'; paintRange($('vol')); window.api.setVolume($('vol').value / 100); });
+$('muted').addEventListener('change', () => window.api.setMuted($('muted').checked));
+$('loop').addEventListener('change', () => window.api.setLoop($('loop').checked));
+$('autostart').addEventListener('change', () => window.api.setAutostart($('autostart').checked));
+
+document.addEventListener('dragover', e => { e.preventDefault(); document.body.classList.add('dragover'); });
+document.addEventListener('dragleave', e => { if (!e.relatedTarget) document.body.classList.remove('dragover'); });
+document.addEventListener('drop', e => {
+  e.preventDefault(); document.body.classList.remove('dragover');
+  const f = e.dataTransfer.files && e.dataTransfer.files[0];
+  if (f && f.path) window.api.setVideo(f.path);
+});
+window.api.onState(render);
+window.api.getState().then(render);
+</script>
+</body>
+</html>

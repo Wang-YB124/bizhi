@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; width: 100%; height: 100%; background: #000; overflow: hidden; }
+  #v { position: absolute; inset: 0; width: 100vw; height: 100vh; object-fit: cover; transform-origin: center center; display: block; }
+  #tile { position: absolute; inset: 0; width: 100vw; height: 100vh; display: none; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <filter id="sh1"><feConvolveMatrix order="3" kernelMatrix="0 -0.12 0 -0.12 1.48 -0.12 0 -0.12 0" preserveAlpha="true"/></filter>
+    <filter id="sh2"><feConvolveMatrix order="3" kernelMatrix="0 -0.3 0 -0.3 2.2 -0.3 0 -0.3 0" preserveAlpha="true"/></filter>
+    <filter id="sh3"><feConvolveMatrix order="3" kernelMatrix="0 -0.55 0 -0.55 3.2 -0.55 0 -0.55 0" preserveAlpha="true"/></filter>
+  </defs>
+</svg>
+<video id="v" playsinline></video>
+<canvas id="tile"></canvas>
+<script>
+const v = document.getElementById('v');
+const tile = document.getElementById('tile');
+const tctx = tile.getContext('2d');
+const cell = document.createElement('canvas');
+const cctx = cell.getContext('2d');
+let currentUrl = null, raf = null;
+let opt = { volume: 0.5, muted: true, loop: true, fit: 'cover', sharpness: 1, scale: 100 };
+
+function report(extra) {
+  window.wallpaperHost.report({ playing: !v.paused && !v.ended, currentTime: v.currentTime || 0, duration: v.duration || 0, ...extra });
+}
+function sizeTile() {
+  tile.width = Math.round(innerWidth * devicePixelRatio);
+  tile.height = Math.round(innerHeight * devicePixelRatio);
+}
+function drawTile() {
+  if (opt.fit !== 'tile') { raf = null; return; }
+  const sc = opt.scale / 100, vw = v.videoWidth || 16, vh = v.videoHeight || 9;
+  const cw = Math.max(1, Math.round(vw * sc)), ch = Math.max(1, Math.round(vh * sc));
+  if (cell.width !== cw) cell.width = cw;
+  if (cell.height !== ch) cell.height = ch;
+  cctx.drawImage(v, 0, 0, cw, ch);
+  tctx.setTransform(1, 0, 0, 1, 0, 0);
+  tctx.fillStyle = tctx.createPattern(cell, 'repeat');
+  tctx.fillRect(0, 0, tile.width, tile.height);
+  raf = requestAnimationFrame(drawTile);
+}
+function applyAll() {
+  v.volume = opt.volume; v.muted = opt.muted; v.loop = opt.loop;
+  const isTile = opt.fit === 'tile';
+  v.style.objectFit = isTile ? 'cover' : (opt.fit === 'center' ? 'none' : opt.fit);
+  v.style.visibility = isTile ? 'hidden' : 'visible';
+  v.style.transform = isTile ? 'none' : 'scale(' + (opt.scale / 100) + ')';
+  const filt = opt.sharpness > 0 ? 'url(#sh' + opt.sharpness + ')' : 'none';
+  v.style.filter = filt; tile.style.filter = filt;
+  tile.style.display = isTile ? 'block' : 'none';
+  if (isTile) { sizeTile(); if (!raf) drawTile(); }
+  else if (raf) { cancelAnimationFrame(raf); raf = null; }
+}
+
+window.wallpaperHost.onLoadVideo(data => {
+  currentUrl = data.url;
+  Object.assign(opt, { volume: data.volume, muted: data.muted, loop: data.loop, fit: data.fit, sharpness: data.sharpness, scale: data.scale });
+  v.src = data.url;
+  applyAll();
+  v.pause();
+  report({ error: null });
+});
+window.wallpaperHost.onCommand(cmd => {
+  if (cmd === 'play') {
+    if (!v.src && currentUrl) v.src = currentUrl;
+    v.play().then(() => report({ error: null })).catch(err => report({ error: String(err) }));
+  } else if (cmd === 'pause') {
+    v.pause();
+  }
+});
+window.wallpaperHost.onOptions(o => { Object.assign(opt, o); applyAll(); });
+
+v.addEventListener('play', () => report());
+v.addEventListener('pause', () => report());
+v.addEventListener('error', () => {
+  const codes = { 1: '加载中止', 2: '网络错误', 3: '解码错误', 4: '文件无法播放（格式不支持或已损坏）' };
+  report({ error: v.error ? (codes[v.error.code] || v.error.message) : '未知播放错误' });
+});
+addEventListener('resize', () => { if (opt.fit === 'tile') sizeTile(); });
+setInterval(() => { if (v.src) report(); }, 1000);
+</script>
+</body>
+</html>

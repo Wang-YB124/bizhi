@@ -1,0 +1,22 @@
+# 运行时与构建产物（体积大，不入库）
+runtime/
+dist/
+node_modules/
+
+# 本地隐私数据：设置、日志、个人视频、QA 截图
+settings.json
+*.log
+qa/
+*.mp4
+*.webm
+*.m4v
+*.ogv
+
+# 开发期临时脚本（仅保留 build-portable.js）
+tools/*
+!tools/build-portable.js
+
+# 系统杂项
+.DS_Store
+Thumbs.db
+desktop.ini
