@@ -46,7 +46,7 @@
 
 ### 便携版（推荐）
 
-1. 下载 `壁纸-portable-win-x64.zip` 并解压到任意目录。
+1. 在 [Releases](https://github.com/Wang-YB124/bizhi/releases) 下载 `bizhi-portable-win-x64.zip`（本地构建产物名为 `壁纸-portable-win-x64.zip`），解压到任意目录。
 2. 双击 `壁纸.exe`。
 3. 在控制面板点文件夹图标选择视频 / 图片，或直接把文件拖入窗口（视频 MP4 / WebM / M4V / OGV；图片 JPG / PNG / WebP / BMP / GIF）。
 4. 媒体即在桌面图标后方播放；添加过的媒体进入「媒体历史」，可点击切换、删除、开启自动轮播。关闭窗口最小化到托盘，右键托盘图标退出。
