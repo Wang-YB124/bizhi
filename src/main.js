@@ -20,7 +20,7 @@ function mediaType(p) {
 let settings = {
   lastVideo: null, volume: 0.5, muted: true, loop: true, autostart: false,
   fit: 'cover', resolution: 'auto', sharpness: 1, scale: 100, stopped: false,
-  history: [], carousel: false, dwell: 10
+  history: [], carousel: false, dwell: 10, uiHue: 170, uiSat: 73
 };
 let playState = { status: 'stopped', file: null, currentTime: 0, duration: 0, error: null };
 let attachMode = 'unknown';
@@ -300,6 +300,11 @@ ipcMain.handle('set-carousel', (e, v) => {
   pushState();
 });
 ipcMain.handle('set-dwell', (e, v) => { settings.dwell = Math.min(120, Math.max(1, Number(v) || 10)); saveSettings(); armDwell(); pushState(); });
+ipcMain.handle('set-theme', (e, h, s) => {
+  settings.uiHue = Math.min(360, Math.max(0, Number(h) || 0));
+  settings.uiSat = Math.min(100, Math.max(0, Number(s) || 0));
+  saveSettings(); pushState();
+});
 ipcMain.handle('set-fit', (e, f) => { if (['cover', 'contain', 'fill', 'center', 'tile'].includes(f)) { settings.fit = f; saveSettings(); wallpaperWin.webContents.send('options', { fit: f }); } });
 ipcMain.handle('set-sharpness', (e, s) => { settings.sharpness = Math.min(3, Math.max(0, Number(s) || 0)); saveSettings(); wallpaperWin.webContents.send('options', { sharpness: settings.sharpness }); });
 ipcMain.handle('set-scale', (e, s) => { settings.scale = Math.min(200, Math.max(50, Number(s) || 100)); saveSettings(); wallpaperWin.webContents.send('options', { scale: settings.scale }); });

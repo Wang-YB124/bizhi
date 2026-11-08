@@ -13,6 +13,7 @@ contextBridge.exposeInMainWorld('api', {
   restoreHistory: item => ipcRenderer.invoke('restore-history', item),
   setCarousel: v => ipcRenderer.invoke('set-carousel', v),
   setDwell: v => ipcRenderer.invoke('set-dwell', v),
+  setTheme: (h, s) => ipcRenderer.invoke('set-theme', h, s),
   setVolume: v => ipcRenderer.invoke('set-volume', v),
   setMuted: m => ipcRenderer.invoke('set-muted', m),
   setLoop: l => ipcRenderer.invoke('set-loop', l),
